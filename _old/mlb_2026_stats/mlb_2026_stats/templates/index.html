@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MLB 2026 Aggregate Player Stats</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #121a2b;
+      --panel-2: #182235;
+      --border: #2b3a55;
+      --text: #e5edf9;
+      --muted: #9db0d0;
+      --accent: #3b82f6;
+      --accent-2: #2563eb;
+      --success: #10b981;
+      --shadow: 0 10px 25px rgba(0,0,0,0.25);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, Arial, sans-serif;
+      background: linear-gradient(180deg, #09111d 0%, #0b1220 100%);
+      color: var(--text);
+    }
+
+    header {
+      padding: 28px 24px 18px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(18, 26, 43, 0.95);
+      backdrop-filter: blur(6px);
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+
+    .header-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0 0 6px 0;
+      font-size: 30px;
+      letter-spacing: 0.2px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-bottom: 18px;
+      font-size: 14px;
+    }
+
+    .controls-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: end;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 150px;
+    }
+
+    .field label {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    input, select, button {
+      padding: 11px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    button {
+      background: var(--accent);
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: transform .15s ease, background .15s ease;
+    }
+
+    button:hover {
+      background: var(--accent-2);
+      transform: translateY(-1px);
+    }
+
+    .secondary {
+      background: #24324d;
+    }
+
+    .secondary:hover {
+      background: #304160;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .quick-buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .status {
+      margin-bottom: 16px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      max-height: 75vh;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th, td {
+      padding: 10px 10px;
+      border-bottom: 1px solid rgba(43, 58, 85, 0.7);
+      white-space: nowrap;
+      text-align: center;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: #162033;
+      z-index: 1;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    th:hover {
+      background: #1b2940;
+    }
+
+    td.name, th.name,
+    td.team, th.team,
+    td.pos, th.pos {
+      text-align: left;
+    }
+
+    tr:hover td {
+      background: rgba(59, 130, 246, 0.06);
+    }
+
+    .pill {
+      display: inline-block;
+      background: rgba(16, 185, 129, 0.12);
+      color: #7ef0c3;
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 12px;
+      margin-left: 8px;
+    }
+
+    .footer-note {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <h1>MLB Aggregate Player Stats <span class="pill">2026 Ready</span></h1>
+      <div class="subtitle">Aggregate hitting and pitching stats by season or date range, with sortable columns and CSV export.</div>
+
+      <div class="controls-card">
+        <div class="controls">
+          <div class="field">
+            <label for="season">Season</label>
+            <select id="season">
+              <option value="2026" selected>2026</option>
+              <option value="2025">2025</option>
+              <option value="2024">2024</option>
+              <option value="2023">2023</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="start_date">Start Date</label>
+            <input type="date" id="start_date">
+          </div>
+
+          <div class="field">
+            <label for="end_date">End Date</label>
+            <input type="date" id="end_date">
+          </div>
+
+          <button onclick="loadStats()">Load Stats</button>
+          <button class="secondary" onclick="downloadCSV()">Download CSV</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="quick-buttons">
+      <button class="secondary" onclick="setSeasonToDate()">Season to Date</button>
+      <button class="secondary" onclick="setLast7Days()">Last 7 Days</button>
+      <button class="secondary" onclick="setLast30Days()">Last 30 Days</button>
+      <button class="secondary" onclick="clearDates()">Clear Dates</button>
+    </div>
+
+    <div class="status" id="status">Loading stats...</div>
+
+    <div class="table-wrap">
+      <table id="statsTable">
+        <thead>
+          <tr>
+            <th class="name" data-key="full_name">Player</th>
+            <th class="team" data-key="current_team">Team</th>
+            <th class="pos" data-key="position">Pos</th>
+            <th data-key="hits">H</th>
+            <th data-key="home_runs">HR</th>
+            <th data-key="rbi">RBI</th>
+            <th data-key="avg">AVG</th>
+            <th data-key="runs">R</th>
+            <th data-key="stolen_bases">SB</th>
+            <th data-key="wins">W</th>
+            <th data-key="total_strikeouts">SO</th>
+            <th data-key="saves">SV</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="footer-note">
+      Click any column header to sort. Data loads automatically on page open.
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

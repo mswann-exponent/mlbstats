@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MLB 2026 Aggregate Player Stats</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+    }
+
+    header {
+      background: #1e293b;
+      padding: 20px;
+      border-bottom: 2px solid #334155;
+    }
+
+    h1 {
+      margin: 0 0 8px 0;
+      font-size: 28px;
+    }
+
+    .subtitle {
+      color: #94a3b8;
+      margin-bottom: 16px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    input, select, button {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #475569;
+      background: #0f172a;
+      color: #e2e8f0;
+      font-size: 14px;
+    }
+
+    button {
+      background: #2563eb;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    .container {
+      padding: 20px;
+    }
+
+    .status {
+      margin-bottom: 15px;
+      color: #94a3b8;
+    }
+
+    .wrap {
+      overflow: auto;
+      max-height: 75vh;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      background: #111827;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th, td {
+      padding: 8px;
+      border-bottom: 1px solid #334155;
+      white-space: nowrap;
+      text-align: center;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: #1f2937;
+      z-index: 1;
+    }
+
+    td.name, th.name,
+    td.team, th.team,
+    td.pos, th.pos {
+      text-align: left;
+    }
+
+    tr:hover {
+      background: #1e293b;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>MLB Aggregate Player Stats</h1>
+    <div class="subtitle">2026 season-ready aggregate hitting and pitching stats with CSV export</div>
+
+    <div class="controls">
+      <label for="season">Season</label>
+      <select id="season">
+        <option value="2026" selected>2026</option>
+        <option value="2025">2025</option>
+        <option value="2024">2024</option>
+        <option value="2023">2023</option>
+      </select>
+
+      <label for="start_date">Start Date</label>
+      <input type="date" id="start_date">
+
+      <label for="end_date">End Date</label>
+      <input type="date" id="end_date">
+
+      <button onclick="loadStats()">Load Stats</button>
+      <button onclick="downloadCSV()">Download CSV</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="status" id="status">Choose a season and optional date range, then load stats.</div>
+
+    <div class="wrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="name">Player</th>
+            <th class="team">Team</th>
+            <th class="pos">Pos</th>
+            <th>AVG</th>
+            <th>OBP</th>
+            <th>SLG</th>
+            <th>OPS</th>
+            <th>H</th>
+            <th>AB</th>
+            <th>HR</th>
+            <th>RBI</th>
+            <th>SB</th>
+            <th>BB</th>
+            <th>H K</th>
+            <th>ERA</th>
+            <th>WHIP</th>
+            <th>P K</th>
+            <th>IP</th>
+            <th>W</th>
+            <th>L</th>
+            <th>SV</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
