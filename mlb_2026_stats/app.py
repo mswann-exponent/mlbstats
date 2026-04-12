@@ -211,7 +211,7 @@ def download_csv():
             p["runs"],
             p["stolen_bases"],
             p["wins"],
-            p["total_strikeouts"],
+            p["pitching_strikeouts"],
             p["saves"]
         ])
 
