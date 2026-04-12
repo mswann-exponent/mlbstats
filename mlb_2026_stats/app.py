@@ -44,28 +44,28 @@ def get_aggregated_stats(season="2026", start_date=None, end_date=None):
         p.bats,
         p.throws,
 
-        SUM(CASE WHEN pgs.stat_group = 'hitting' THEN pgs.games ELSE 0 END) as hitting_games,
-        SUM(CASE WHEN pgs.stat_group = 'hitting' THEN pgs.at_bats ELSE 0 END) as at_bats,
-        SUM(CASE WHEN pgs.stat_group = 'hitting' THEN pgs.runs ELSE 0 END) as runs,
-        SUM(CASE WHEN pgs.stat_group = 'hitting' THEN pgs.hits ELSE 0 END) as hits,
-        SUM(CASE WHEN pgs.stat_group = 'hitting' THEN pgs.doubles ELSE 0 END) as doubles,
-        SUM(CASE WHEN pgs.stat_group = 'hitting' THEN pgs.triples ELSE 0 END) as triples,
-        SUM(CASE WHEN pgs.stat_group = 'hitting' THEN pgs.home_runs ELSE 0 END) as home_runs,
-        SUM(CASE WHEN pgs.stat_group = 'hitting' THEN pgs.rbi ELSE 0 END) as rbi,
-        SUM(CASE WHEN pgs.stat_group = 'hitting' THEN pgs.stolen_bases ELSE 0 END) as stolen_bases,
-        SUM(CASE WHEN pgs.stat_group = 'hitting' THEN pgs.walks ELSE 0 END) as walks,
-        SUM(CASE WHEN pgs.stat_group = 'hitting' THEN pgs.strikeouts ELSE 0 END) as hitting_strikeouts,
-        SUM(CASE WHEN pgs.stat_group = 'hitting' THEN pgs.hit_by_pitch ELSE 0 END) as hit_by_pitch,
+        SUM(CASE WHEN pgs.stat_group = 'hitting' THEN pgs.games ELSE 0 END) AS hitting_games,
+        SUM(CASE WHEN pgs.stat_group = 'hitting' THEN pgs.at_bats ELSE 0 END) AS at_bats,
+        SUM(CASE WHEN pgs.stat_group = 'hitting' THEN pgs.runs ELSE 0 END) AS runs,
+        SUM(CASE WHEN pgs.stat_group = 'hitting' THEN pgs.hits ELSE 0 END) AS hits,
+        SUM(CASE WHEN pgs.stat_group = 'hitting' THEN pgs.doubles ELSE 0 END) AS doubles,
+        SUM(CASE WHEN pgs.stat_group = 'hitting' THEN pgs.triples ELSE 0 END) AS triples,
+        SUM(CASE WHEN pgs.stat_group = 'hitting' THEN pgs.home_runs ELSE 0 END) AS home_runs,
+        SUM(CASE WHEN pgs.stat_group = 'hitting' THEN pgs.rbi ELSE 0 END) AS rbi,
+        SUM(CASE WHEN pgs.stat_group = 'hitting' THEN pgs.stolen_bases ELSE 0 END) AS stolen_bases,
+        SUM(CASE WHEN pgs.stat_group = 'hitting' THEN pgs.walks ELSE 0 END) AS walks,
+        SUM(CASE WHEN pgs.stat_group = 'hitting' THEN pgs.strikeouts ELSE 0 END) AS hitting_strikeouts,
+        SUM(CASE WHEN pgs.stat_group = 'hitting' THEN pgs.hit_by_pitch ELSE 0 END) AS hit_by_pitch,
 
-        SUM(CASE WHEN pgs.stat_group = 'pitching' THEN pgs.games ELSE 0 END) as pitching_games,
-        SUM(CASE WHEN pgs.stat_group = 'pitching' THEN pgs.innings_pitched ELSE 0 END) as innings_pitched,
-        SUM(CASE WHEN pgs.stat_group = 'pitching' THEN pgs.wins ELSE 0 END) as wins,
-        SUM(CASE WHEN pgs.stat_group = 'pitching' THEN pgs.losses ELSE 0 END) as losses,
-        SUM(CASE WHEN pgs.stat_group = 'pitching' THEN pgs.saves ELSE 0 END) as saves,
-        SUM(CASE WHEN pgs.stat_group = 'pitching' THEN pgs.earned_runs ELSE 0 END) as earned_runs,
-        SUM(CASE WHEN pgs.stat_group = 'pitching' THEN pgs.hits_allowed ELSE 0 END) as hits_allowed,
-        SUM(CASE WHEN pgs.stat_group = 'pitching' THEN pgs.walks_allowed ELSE 0 END) as walks_allowed,
-        SUM(CASE WHEN pgs.stat_group = 'pitching' THEN pgs.pitching_strikeouts ELSE 0 END) as pitching_strikeouts
+        SUM(CASE WHEN pgs.stat_group = 'pitching' THEN pgs.games ELSE 0 END) AS pitching_games,
+        SUM(CASE WHEN pgs.stat_group = 'pitching' THEN pgs.innings_pitched ELSE 0 END) AS innings_pitched,
+        SUM(CASE WHEN pgs.stat_group = 'pitching' THEN pgs.wins ELSE 0 END) AS wins,
+        SUM(CASE WHEN pgs.stat_group = 'pitching' THEN pgs.losses ELSE 0 END) AS losses,
+        SUM(CASE WHEN pgs.stat_group = 'pitching' THEN pgs.saves ELSE 0 END) AS saves,
+        SUM(CASE WHEN pgs.stat_group = 'pitching' THEN pgs.earned_runs ELSE 0 END) AS earned_runs,
+        SUM(CASE WHEN pgs.stat_group = 'pitching' THEN pgs.hits_allowed ELSE 0 END) AS hits_allowed,
+        SUM(CASE WHEN pgs.stat_group = 'pitching' THEN pgs.walks_allowed ELSE 0 END) AS walks_allowed,
+        SUM(CASE WHEN pgs.stat_group = 'pitching' THEN pgs.pitching_strikeouts ELSE 0 END) AS pitching_strikeouts
 
     FROM player_game_stats pgs
     JOIN players p ON p.player_id = pgs.player_id
@@ -140,7 +140,7 @@ def get_aggregated_stats(season="2026", start_date=None, end_date=None):
             "pitching_strikeouts": row["pitching_strikeouts"] or 0,
             "total_strikeouts": total_so,
             "era": era,
-            "whip": whip
+            "whip": whip,
         })
 
     return result
@@ -157,7 +157,12 @@ def api_stats():
     start_date = request.args.get("start_date")
     end_date = request.args.get("end_date")
 
-    data = get_aggregated_stats(season=season, start_date=start_date, end_date=end_date)
+    data = get_aggregated_stats(
+        season=season,
+        start_date=start_date,
+        end_date=end_date
+    )
+
     return jsonify({
         "count": len(data),
         "players": data
@@ -170,7 +175,11 @@ def download_csv():
     start_date = request.args.get("start_date")
     end_date = request.args.get("end_date")
 
-    data = get_aggregated_stats(season=season, start_date=start_date, end_date=end_date)
+    data = get_aggregated_stats(
+        season=season,
+        start_date=start_date,
+        end_date=end_date
+    )
 
     output = io.StringIO()
     writer = csv.writer(output)
