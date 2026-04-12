@@ -1,0 +1,39 @@
+name: Sync MLB stats nightly
+
+on:
+  schedule:
+    - cron: "30 3 * * *"  # example: 11:30 PM Eastern Daylight Time
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: mlb_2026_stats
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run sync script
+        run: python sync_stats.py
+
+      - name: Commit updated database/files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          git diff --staged --quiet || git commit -m "Nightly stats sync"
+          git push
