@@ -2,7 +2,7 @@ name: Sync MLB stats nightly
 
 on:
   schedule:
-    - cron: "30 3 * * *"  # example: 11:30 PM Eastern Daylight Time
+    - cron: "30 3 * * *"
   workflow_dispatch:
 
 jobs:
