@@ -219,13 +219,14 @@ def download_csv():
     if start_date and end_date:
         filename = f"mlb_aggregate_stats_{season}_{start_date}_to_{end_date}.csv"
 
+    # Encode with UTF-8 BOM so Excel correctly renders accented characters
+    csv_bytes = output.getvalue().encode("utf-8-sig")
+
     return Response(
-        output.getvalue(),
-        mimetype="text/csv",
+        csv_bytes,
+        mimetype="text/csv; charset=utf-8",
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
-
-
 @app.route("/api/date-presets")
 def date_presets():
     today = date.today()
