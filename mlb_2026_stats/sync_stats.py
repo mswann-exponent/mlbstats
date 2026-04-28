@@ -2,11 +2,14 @@ import requests
 import certifi
 import urllib3
 import time
+from datetime import datetime, timedelta
 from models import init_db, get_conn
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 BASE_URL = "https://statsapi.mlb.com/api/v1"
+RECENT_DAYS_TO_REFRESH = 3
+
 
 def safe_get(url, params=None, timeout=30):
     try:
@@ -20,6 +23,7 @@ def safe_get(url, params=None, timeout=30):
     except requests.RequestException as e:
         print(f"Request failed: {url} params={params} error={e}")
         return None
+
 
 def get_schedule(season="2026", start_date=None, end_date=None):
     params = {
@@ -47,14 +51,17 @@ def get_schedule(season="2026", start_date=None, end_date=None):
 
     return games
 
+
 def get_boxscore(game_pk):
     return safe_get(f"{BASE_URL}/game/{game_pk}/boxscore")
+
 
 def get_db_connection():
     conn = get_conn()
     conn.execute("PRAGMA journal_mode=WAL;")
     conn.execute("PRAGMA busy_timeout = 5000;")
     return conn
+
 
 def parse_innings(ip_str):
     if not ip_str:
@@ -77,6 +84,7 @@ def parse_innings(ip_str):
     except Exception:
         return 0.0
 
+
 def upsert_player(cur, player_id, full_name, current_team, position, bats, throws):
     cur.execute("""
         INSERT INTO players (player_id, full_name, current_team, position, bats, throws)
@@ -88,6 +96,7 @@ def upsert_player(cur, player_id, full_name, current_team, position, bats, throw
             bats = excluded.bats,
             throws = excluded.throws
     """, (player_id, full_name, current_team, position, bats, throws))
+
 
 def upsert_game_stat(cur, row):
     cur.execute("""
@@ -152,6 +161,7 @@ def upsert_game_stat(cur, row):
         row["walks_allowed"],
         row["pitching_strikeouts"]
     ))
+
 
 def process_team_players(cur, team_players, team_name, opponent_name, game_pk, game_date, season):
     for _, player_wrapper in team_players.items():
@@ -253,6 +263,7 @@ def process_team_players(cur, team_players, team_name, opponent_name, game_pk, g
                 "pitching_strikeouts": int(pitching.get("strikeOuts", 0) or 0)
             })
 
+
 def process_game(conn, cur, game):
     game_pk = game["gamePk"]
     game_date = game["gameDate"]
@@ -275,9 +286,11 @@ def process_game(conn, cur, game):
     conn.commit()
     return True
 
+
 def get_existing_game_ids(cur, season):
     cur.execute("SELECT DISTINCT game_pk FROM player_game_stats WHERE season = ?", (season,))
     return {row[0] for row in cur.fetchall()}
+
 
 def run_sync(season="2026", start_date=None, end_date=None, limit=None, incremental=True):
     init_db()
@@ -293,10 +306,17 @@ def run_sync(season="2026", start_date=None, end_date=None, limit=None, incremen
         print(f"Found {len(games)} scheduled games for season {season}")
 
         existing_ids = get_existing_game_ids(cur, season) if incremental else set()
+
+        recent_cutoff = (datetime.today() - timedelta(days=RECENT_DAYS_TO_REFRESH)).date().isoformat()
+
         if incremental:
-            games = [g for g in games if g["gamePk"] not in existing_ids]
+            games = [
+                g for g in games
+                if g["gamePk"] not in existing_ids or g["gameDate"] >= recent_cutoff
+            ]
 
         print(f"{len(games)} games remaining after incremental filter")
+        print(f"Refreshing all games on or after {recent_cutoff}")
 
         processed = 0
         skipped = 0
@@ -304,6 +324,7 @@ def run_sync(season="2026", start_date=None, end_date=None, limit=None, incremen
         for i, game in enumerate(games, start=1):
             try:
                 status = (game.get("status") or "").lower()
+
                 if "scheduled" in status or "pre-game" in status:
                     skipped += 1
                     continue
@@ -311,6 +332,7 @@ def run_sync(season="2026", start_date=None, end_date=None, limit=None, incremen
                 ok = process_game(conn, cur, game)
                 if ok:
                     processed += 1
+
             except Exception as e:
                 print(f"Game processing failed for {game.get('gamePk')}: {e}")
 
@@ -320,8 +342,10 @@ def run_sync(season="2026", start_date=None, end_date=None, limit=None, incremen
             time.sleep(0.02)
 
         print(f"Sync complete | processed={processed} skipped={skipped}")
+
     finally:
         conn.close()
+
 
 if __name__ == "__main__":
     run_sync(season="2026", incremental=True)
