@@ -348,4 +348,4 @@ def run_sync(season="2026", start_date=None, end_date=None, limit=None, incremen
 
 
 if __name__ == "__main__":
-    run_sync(season="2026", incremental=False)
+    run_sync(season="2026", incremental=True)
