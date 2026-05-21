@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Player Game Log – MLB Stats 2026</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f1923;
+      color: #e8eaed;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #1a2535;
+      border-bottom: 2px solid #c8102e;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    header a { color: #7ab3ef; text-decoration: none; font-size: 0.85rem; }
+    header a:hover { text-decoration: underline; }
+    #player-header h1 { font-size: 1.6rem; font-weight: 700; }
+    #player-header p  { font-size: 0.9rem; color: #9aa5b4; margin-top: 2px; }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: flex-end;
+      padding: 16px 24px;
+      background: #151f2e;
+      border-bottom: 1px solid #253044;
+    }
+    .filter-group { display: flex; flex-direction: column; gap: 4px; }
+    .filter-group label { font-size: 0.75rem; color: #9aa5b4; text-transform: uppercase; }
+    .filters input, .filters select {
+      background: #1a2535;
+      border: 1px solid #2e4060;
+      color: #e8eaed;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.875rem;
+    }
+    .btn {
+      padding: 7px 18px;
+      border-radius: 6px;
+      border: none;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-primary   { background: #c8102e; color: #fff; }
+    .btn-primary:hover  { background: #a50d25; }
+    .btn-secondary { background: #253044; color: #e8eaed; }
+    .btn-secondary:hover { background: #2e3f5a; }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      padding: 12px 24px 0;
+      border-bottom: 1px solid #253044;
+      background: #0f1923;
+    }
+    .tab {
+      padding: 8px 18px;
+      cursor: pointer;
+      border-radius: 6px 6px 0 0;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #9aa5b4;
+      border: 1px solid transparent;
+      border-bottom: none;
+      background: transparent;
+    }
+    .tab.active {
+      background: #1a2535;
+      color: #fff;
+      border-color: #253044;
+    }
+
+    .table-wrap {
+      padding: 16px 24px 32px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+    thead tr { background: #1a2535; border-bottom: 2px solid #c8102e; }
+    thead th {
+      padding: 10px 12px;
+      text-align: center;
+      font-weight: 600;
+      color: #9aa5b4;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+    }
+    thead th:first-child,
+    thead th:nth-child(2),
+    thead th:nth-child(3) { text-align: left; }
+
+    tbody tr { border-bottom: 1px solid #1e2d40; transition: background 0.1s; }
+    tbody tr:hover { background: #1a2535; }
+    tbody td {
+      padding: 9px 12px;
+      text-align: center;
+      color: #cdd5df;
+    }
+    tbody td:first-child,
+    tbody td:nth-child(2),
+    tbody td:nth-child(3) { text-align: left; }
+
+    /* highlight strong performances */
+    .highlight-hr  { color: #f4c542; font-weight: 700; }
+    .highlight-rbi { color: #4fc98e; font-weight: 700; }
+    .highlight-so  { color: #e05a5a; }
+
+    /* totals row */
+    tfoot tr { background: #1a2535; border-top: 2px solid #c8102e; }
+    tfoot td {
+      padding: 9px 12px;
+      text-align: center;
+      font-weight: 700;
+      color: #fff;
+    }
+    tfoot td:first-child { text-align: left; }
+
+    .hidden { display: none; }
+
+    #status {
+      padding: 32px 24px;
+      color: #9aa5b4;
+      font-size: 0.9rem;
+    }
+
+    /* summary cards */
+    .summary-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 16px 24px;
+      background: #151f2e;
+      border-bottom: 1px solid #253044;
+    }
+    .stat-card {
+      background: #1a2535;
+      border: 1px solid #253044;
+      border-radius: 8px;
+      padding: 10px 18px;
+      min-width: 80px;
+      text-align: center;
+    }
+    .stat-card .label {
+      font-size: 0.7rem;
+      color: #9aa5b4;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .stat-card .value {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #fff;
+      margin-top: 2px;
+    }
+
+    @media (max-width: 600px) {
+      .filters { flex-direction: column; }
+      .summary-bar { gap: 8px; }
+      .stat-card { min-width: 60px; padding: 8px 10px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="/">&larr; Back to All Players</a>
+  <div id="player-header">
+    <h1 id="player-name">Loading…</h1>
+    <p id="player-meta"></p>
+  </div>
+</header>
+
+<!-- Filters -->
+<div class="filters">
+  <div class="filter-group">
+    <label>Season</label>
+    <select id="f-season">
+      <option value="2026" selected>2026</option>
+      <option value="2025">2025</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Start Date</label>
+    <input type="date" id="f-start" />
+  </div>
+  <div class="filter-group">
+    <label>End Date</label>
+    <input type="date" id="f-end" />
+  </div>
+  <button class="btn btn-primary"   id="btn-apply">Apply</button>
+  <button class="btn btn-secondary" id="btn-reset">Reset</button>
+  <button class="btn btn-secondary" id="btn-last7">Last 7 Days</button>
+  <button class="btn btn-secondary" id="btn-last30">Last 30 Days</button>
+</div>
+
+<!-- Season summary cards -->
+<div class="summary-bar" id="summary-bar"></div>
+
+<!-- Hitting / Pitching tabs -->
+<div class="tabs">
+  <div class="tab active" data-tab="hitting">Hitting</div>
+  <div class="tab"        data-tab="pitching">Pitching</div>
+</div>
+
+<div id="status">Loading game log…</div>
+
+<!-- HITTING TABLE -->
+<div class="table-wrap hidden" id="hitting-section">
+  <table id="hitting-table">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Opp</th>
+        <th>H/A</th>
+        <th>AB</th>
+        <th>R</th>
+        <th>H</th>
+        <th>2B</th>
+        <th>3B</th>
+        <th>HR</th>
+        <th>RBI</th>
+        <th>SB</th>
+        <th>BB</th>
+        <th>SO</th>
+        <th>HBP</th>
+        <th>AVG</th>
+        <th>OBP</th>
+        <th>SLG</th>
+        <th>OPS</th>
+      </tr>
+    </thead>
+    <tbody id="hitting-body"></tbody>
+    <tfoot id="hitting-foot"></tfoot>
+  </table>
+</div>
+
+<!-- PITCHING TABLE -->
+<div class="table-wrap hidden" id="pitching-section">
+  <table id="pitching-table">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Opp</th>
+        <th>H/A</th>
+        <th>IP</th>
+        <th>W</th>
+        <th>L</th>
+        <th>SV</th>
+        <th>ER</th>
+        <th>HA</th>
+        <th>BB</th>
+        <th>SO</th>
+        <th>ERA</th>
+        <th>WHIP</th>
+      </tr>
+    </thead>
+    <tbody id="pitching-body"></tbody>
+    <tfoot id="pitching-foot"></tfoot>
+  </table>
+</div>
+
+<script>
+// ── Grab player_id from the URL path  /player/<player_id>
+const PLAYER_ID = window.location.pathname.split("/").filter(Boolean).pop();
+let   activeTab = "hitting";
+let   allGames  = [];
+
+// ── Utilities ──────────────────────────────────────────────
+const fmt3  = v => (v == null ? "—" : Number(v).toFixed(3));
+const fmt2  = v => (v == null ? "—" : Number(v).toFixed(2));
+const fmtN  = v => (v == null || v === 0 ? "0" : v);
+const today = () => new Date().toISOString().slice(0, 10);
+const daysAgo = n => {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toISOString().slice(0, 10);
+};
+
+// ── Fetch & render ──────────────────────────────────────────
+async function loadGameLog() {
+  const season = document.getElementById("f-season").value;
+  const start  = document.getElementById("f-start").value;
+  const end    = document.getElementById("f-end").value;
+
+  let url = `/api/player/${PLAYER_ID}/gamelog?season=${season}`;
+  if (start) url += `&start_date=${start}`;
+  if (end)   url += `&end_date=${end}`;
+
+  document.getElementById("status").textContent = "Loading…";
+  document.getElementById("hitting-section").classList.add("hidden");
+  document.getElementById("pitching-section").classList.add("hidden");
+
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+
+    // Player header
+    document.getElementById("player-name").textContent = data.player.full_name;
+    document.getElementById("player-meta").textContent =
+      `${data.player.current_team} · ${data.player.position}`;
+    document.title = `${data.player.full_name} – Game Log`;
+
+    allGames = data.games;
+
+    if (allGames.length === 0) {
+      document.getElementById("status").textContent =
+        "No games found for the selected filters.";
+      buildSummary([]);
+      return;
+    }
+
+    document.getElementById("status").textContent = "";
+    buildSummary(allGames);
+    renderHitting(allGames);
+    renderPitching(allGames);
+    showTab(activeTab);
+
+  } catch (err) {
+    document.getElementById("status").textContent = `Error: ${err.message}`;
+  }
+}
+
+// ── Summary cards ───────────────────────────────────────────
+function buildSummary(games) {
+  // Totals across all fetched games
+  const totals = games.reduce((acc, g) => {
+    acc.ab  += g.at_bats          || 0;
+    acc.h   += g.hits             || 0;
+    acc.hr  += g.home_runs        || 0;
+    acc.rbi += g.rbi              || 0;
+    acc.r   += g.runs             || 0;
+    acc.sb  += g.stolen_bases     || 0;
+    acc.bb  += g.walks            || 0;
+    acc.so  += g.hitting_strikeouts || 0;
+    acc.ip  += g.innings_pitched  || 0;
+    acc.w   += g.wins             || 0;
+    acc.sv  += g.saves            || 0;
+    acc.er  += g.earned_runs      || 0;
+    acc.pso += g.pitching_strikeouts || 0;
+    return acc;
+  }, { ab:0,h:0,hr:0,rbi:0,r:0,sb:0,bb:0,so:0,ip:0,w:0,sv:0,er:0,pso:0 });
+
+  const avg  = totals.ab > 0 ? (totals.h / totals.ab).toFixed(3) : ".000";
+  const era  = totals.ip > 0 ? ((totals.er * 9) / totals.ip).toFixed(2) : "—";
+
+  const cards = [
+    { label:"G",   value: games.length },
+    { label:"AVG", value: avg },
+    { label:"HR",  value: totals.hr },
+    { label:"RBI", value: totals.rbi },
+    { label:"R",   value: totals.r },
+    { label:"SB",  value: totals.sb },
+    { label:"BB",  value: totals.bb },
+    { label:"SO",  value: totals.so },
+    { label:"IP",  value: totals.ip.toFixed(1) },
+    { label:"W",   value: totals.w },
+    { label:"SV",  value: totals.sv },
+    { label:"ERA", value: era },
+    { label:"K",   value: totals.pso },
+  ];
+
+  const bar = document.getElementById("summary-bar");
+  bar.innerHTML = cards.map(c => `
+    <div class="stat-card">
+      <div class="label">${c.label}</div>
+      <div class="value">${c.value}</div>
+    </div>`).join("");
+}
+
+// ── Hitting table ───────────────────────────────────────────
+function renderHitting(games) {
+  const body = document.getElementById("hitting-body");
+  const foot = document.getElementById("hitting-foot");
+
+  // Only show games where the player had an at-bat or plate appearance
+  const hGames = games.filter(g =>
+    g.at_bats > 0 || g.hits > 0 || g.walks > 0 || g.rbi > 0
+  );
+
+  if (hGames.length === 0) {
+    body.innerHTML = `<tr><td colspan="18" style="padding:20px;color:#9aa5b4;">No hitting data.</td></tr>`;
+    foot.innerHTML = "";
+    return;
+  }
+
+  body.innerHTML = hGames.map(g => {
+    const hrClass  = g.home_runs > 0 ? "highlight-hr"  : "";
+    const rbiClass = g.rbi       > 0 ? "highlight-rbi" : "";
+    const soClass  = g.hitting_strikeouts > 0 ? "highlight-so" : "";
+    return `
+    <tr>
+      <td>${g.game_date}</td>
+      <td>${g.opponent}</td>
+      <td>${g.home_away}</td>
+      <td>${fmtN(g.at_bats)}</td>
+      <td>${fmtN(g.runs)}</td>
+      <td>${fmtN(g.hits)}</td>
+      <td>${fmtN(g.doubles)}</td>
+      <td>${fmtN(g.triples)}</td>
+      <td class="${hrClass}">${fmtN(g.home_runs)}</td>
+      <td class="${rbiClass}">${fmtN(g.rbi)}</td>
+      <td>${fmtN(g.stolen_bases)}</td>
+      <td>${fmtN(g.walks)}</td>
+      <td class="${soClass}">${fmtN(g.hitting_strikeouts)}</td>
+      <td>${fmtN(g.hit_by_pitch)}</td>
+      <td>${fmt3(g.avg)}</td>
+      <td>${fmt3(g.obp)}</td>
+      <td>${fmt3(g.slg)}</td>
+      <td>${fmt3(g.ops)}</td>
+    </tr>`;
+  }).join("");
+
+  // Totals row
+  const tot = hGames.reduce((a, g) => {
+    a.ab  += g.at_bats || 0;
+    a.r   += g.runs    || 0;
+    a.h   += g.hits    || 0;
+    a.d   += g.doubles || 0;
+    a.t   += g.triples || 0;
+    a.hr  += g.home_runs || 0;
+    a.rbi += g.rbi     || 0;
+    a.sb  += g.stolen_bases || 0;
+    a.bb  += g.walks   || 0;
+    a.so  += g.hitting_strikeouts || 0;
+    a.hbp += g.hit_by_pitch || 0;
+    return a;
+  }, {ab:0,r:0,h:0,d:0,t:0,hr:0,rbi:0,sb:0,bb:0,so:0,hbp:0});
+
+  const tAvg = tot.ab > 0 ? (tot.h / tot.ab).toFixed(3) : ".000";
+  const obpD = tot.ab + tot.bb + tot.hbp;
+  const tObp = obpD  > 0 ? ((tot.h + tot.bb + tot.hbp) / obpD).toFixed(3) : ".000";
+  const sing  = tot.h - tot.d - tot.t - tot.hr;
+  const tb    = sing + tot.d*2 + tot.t*3 + tot.hr*4;
+  const tSlg  = tot.ab > 0 ? (tb / tot.ab).toFixed(3) : ".000";
+  const tOps  = (parseFloat(tObp) + parseFloat(tSlg)).toFixed(3);
+
+  foot.innerHTML = `
+  <tr>
+    <td>TOTALS</td><td></td><td></td>
+    <td>${tot.ab}</td>
+    <td>${tot.r}</td>
+    <td>${tot.h}</td>
+    <td>${tot.d}</td>
+    <td>${tot.t}</td>
+    <td>${tot.hr}</td>
+    <td>${tot.rbi}</td>
+    <td>${tot.sb}</td>
+    <td>${tot.bb}</td>
+    <td>${tot.so}</td>
+    <td>${tot.hbp}</td>
+    <td>${tAvg}</td>
+    <td>${tObp}</td>
+    <td>${tSlg}</td>
+    <td>${tOps}</td>
+  </tr>`;
+}
+
+// ── Pitching table ──────────────────────────────────────────
+function renderPitching(games) {
+  const body = document.getElementById("pitching-body");
+  const foot = document.getElementById("pitching-foot");
+
+  const pGames = games.filter(g => g.innings_pitched > 0);
+
+  if (pGames.length === 0) {
+    body.innerHTML = `<tr><td colspan="13" style="padding:20px;color:#9aa5b4;">No pitching data.</td></tr>`;
+    foot.innerHTML = "";
+    return;
+  }
+
+  body.innerHTML = pGames.map(g => `
+    <tr>
+      <td>${g.game_date}</td>
+      <td>${g.opponent}</td>
+      <td>${g.home_away}</td>
+      <td>${g.innings_pitched != null ? Number(g.innings_pitched).toFixed(1) : "—"}</td>
+      <td>${fmtN(g.wins)}</td>
+      <td>${fmtN(g.losses)}</td>
+      <td>${fmtN(g.saves)}</td>
+      <td>${fmtN(g.earned_runs)}</td>
+      <td>${fmtN(g.hits_allowed)}</td>
+      <td>${fmtN(g.walks_allowed)}</td>
+      <td>${fmtN(g.pitching_strikeouts)}</td>
+      <td>${fmt2(g.era)}</td>
+      <td>${fmt3(g.whip)}</td>
+    </tr>`).join("");
+
+  const tot = pGames.reduce((a, g) => {
+    a.ip  += g.innings_pitched     || 0;
+    a.w   += g.wins                || 0;
+    a.l   += g.losses              || 0;
+    a.sv  += g.saves               || 0;
+    a.er  += g.earned_runs         || 0;
+    a.ha  += g.hits_allowed        || 0;
+    a.wa  += g.walks_allowed       || 0;
+    a.so  += g.pitching_strikeouts || 0;
+    return a;
+  }, {ip:0,w:0,l:0,sv:0,er:0,ha:0,wa:0,so:0});
+
+  const tEra  = tot.ip > 0 ? ((tot.er * 9) / tot.ip).toFixed(2) : "—";
+  const tWhip = tot.ip > 0 ? ((tot.wa + tot.ha) / tot.ip).toFixed(3) : "—";
+
+  foot.innerHTML = `
+  <tr>
+    <td>TOTALS</td><td></td><td></td>
+    <td>${tot.ip.toFixed(1)}</td>
+    <td>${tot.w}</td>
+    <td>${tot.l}</td>
+    <td>${tot.sv}</td>
+    <td>${tot.er}</td>
+    <td>${tot.ha}</td>
+    <td>${tot.wa}</td>
+    <td>${tot.so}</td>
+    <td>${tEra}</td>
+    <td>${tWhip}</td>
+  </tr>`;
+}
+
+// ── Tab switching ───────────────────────────────────────────
+function showTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll(".tab").forEach(el => {
+    el.classList.toggle("active", el.dataset.tab === tab);
+  });
+  document.getElementById("hitting-section").classList.toggle("hidden",  tab !== "hitting");
+  document.getElementById("pitching-section").classList.toggle("hidden", tab !== "pitching");
+}
+
+document.querySelectorAll(".tab").forEach(el => {
+  el.addEventListener("click", () => showTab(el.dataset.tab));
+});
+
+// ── Filter buttons ──────────────────────────────────────────
+document.getElementById("btn-apply").addEventListener("click", loadGameLog);
+
+document.getElementById("btn-reset").addEventListener("click", () => {
+  document.getElementById("f-start").value = "";
+  document.getElementById("f-end").value   = "";
+  document.getElementById("f-season").value = "2026";
+  loadGameLog();
+});
+
+document.getElementById("btn-last7").addEventListener("click", () => {
+  document.getElementById("f-start").value = daysAgo(7);
+  document.getElementById("f-end").value   = today();
+  loadGameLog();
+});
+
+document.getElementById("btn-last30").addEventListener("click", () => {
+  document.getElementById("f-start").value = daysAgo(30);
+  document.getElementById("f-end").value   = today();
+  loadGameLog();
+});
+
+// ── Initial load ─────────────────────────────────────────────
+loadGameLog();
+</script>
+</body>
+</html>
